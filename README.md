@@ -22,7 +22,7 @@ This README file will guide you through the steps on how to use the AAPanel-PHP 
 ```php
 <?php
 
-include_once 'api/api_aapanel_mitha.php';
+use mythicalsystems\aapanel\aapanel_api;
 
 $aapanel = new aapanel_api();
 
