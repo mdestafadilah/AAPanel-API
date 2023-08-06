@@ -78,14 +78,14 @@ $aapanel->modifySubDomain($subdomain, $mainDomain, $iptarget, $id)
 
 ```
 
-## unzip file (file must exist in server)
+## Unzip file (file must exist in server)
 
 ```
 $aapanel->unzip($sourcefilepath,$destinationpath,$password = null);
 
 ```
 
-## force HTTPS for site (site must exist in website tab)
+## Force HTTPS for site (site must exist in website tab)
 
 ```
 $aapanel->forceHTTPS($sitename);
