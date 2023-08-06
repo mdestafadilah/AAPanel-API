@@ -1,0 +1,4 @@
+ceklog.php
+*.cookie
+/.vscode
+/vendor/
