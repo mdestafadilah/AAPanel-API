@@ -10,7 +10,7 @@ namespace mythicalsystems\aapanel;
 *  @author MythicalSystems
  * @package mythicalsystems/aapanelapi
 */
-class aapanel_api
+class aapanel
 {
     public $key = null;
     public $url = null;

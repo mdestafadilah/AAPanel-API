@@ -2,7 +2,6 @@
     "name": "mythicalsystems/aapanelapi",
     "description": "AAPanel-PHP is a library that allows you to interact with your AAPanel account using PHP. It provides a simple and easy-to-use API that you can use to manage your AAPanel account, such as creating and managing users, domains, and websites.",
     "type": "library",
-    "version": "1.0.0-beta",
     "license": "MIT",
     "keywords": [
         "mythicalsystems",
