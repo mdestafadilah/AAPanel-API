@@ -20,7 +20,7 @@
             "email": "ghermancassian2008@gmail.com"
         }
     ],
-    "minimum-stability": "beta",
+    "minimum-stability": "stable",
     "require": {
         "php": ">=5.3.0"
     }
