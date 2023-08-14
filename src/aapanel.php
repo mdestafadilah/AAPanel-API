@@ -10,6 +10,9 @@ namespace mythicalsystems\aapanel;
 *  @author MythicalSystems
  * @package mythicalsystems/aapanelapi
 */
+
+// TODO: https://stackoverflow.com/a/70896200 (using guzzle)
+
 class aapanel
 {
     public $key = null;
