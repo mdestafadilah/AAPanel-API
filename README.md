@@ -245,4 +245,4 @@ If you are one of the original authors and want this notice worded differently, 
 
 ## License
 
-MIT. Copyright (c) 2022 skolastikarhea, 2022–2023 mdestafadilah, 2023 MythicalSystems / NaysKutzu — see [LICENSE](../LICENSE).
+MIT. Copyright (c) 2022 skolastikarhea, 2022–2023 mdestafadilah, 2023 MythicalSystems / NaysKutzu — see [LICENSE](LICENSE).
