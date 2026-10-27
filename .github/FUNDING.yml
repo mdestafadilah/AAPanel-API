@@ -1,3 +1,6 @@
-github: ['nayskutzu']
-ko_fi: nayskutzu
-custom: ['https://paypal.me/mythicalsystems']
+# Sponsor button targets for this repository.
+# Trakteer and Saweria have no dedicated key in FUNDING.yml, so both go
+# under `custom`.
+custom:
+  - https://trakteer.id/mdestafadilah/tip
+  - https://saweria.co/mdestafadilah
