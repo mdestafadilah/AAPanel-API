@@ -1,0 +1,144 @@
+name: Release
+
+# Pushing a tag is the only manual step: this workflow verifies the tag on the
+# oldest and newest supported PHP, then publishes a GitHub release.
+#
+#   git tag -a v2.1.0 -m "2.1.0 - service management"
+#   git push origin v2.1.0
+#
+# Packagist picks the tag up through its GitHub webhook on its own. The optional
+# PACKAGIST_TOKEN secret only makes that update immediate instead of "within a
+# minute".
+
+on:
+  push:
+    tags:
+      - 'v*.*.*'
+
+permissions:
+  contents: write
+
+jobs:
+  verify:
+    name: Verify tag (PHP ${{ matrix.php }})
+    runs-on: ubuntu-latest
+
+    strategy:
+      fail-fast: true
+      matrix:
+        # 7.4 is the floor declared in composer.json, 8.3 the newest tested.
+        php: ['7.4', '8.3']
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: ${{ matrix.php }}
+          extensions: curl
+          coverage: none
+
+      - name: Validate composer.json
+        run: composer validate --strict
+
+      - name: Install dependencies
+        run: composer install --prefer-dist --no-progress
+
+      - name: Lint
+        run: find src tests sample -name '*.php' -print0 | xargs -0 -n1 php -l
+
+      - name: Test
+        run: composer test
+
+  release:
+    name: Publish GitHub release
+    needs: verify
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      # A tag that disagrees with the version file would publish a release whose
+      # name does not match what Composer sees, so stop before creating anything.
+      - name: Check the tag against the version file
+        id: version
+        run: |
+          set -eu
+          tag="${GITHUB_REF_NAME#v}"
+          base="${tag%%-*}"
+          file="$(tr -d '[:space:]' < version)"
+
+          if [ "$base" != "$file" ]; then
+            echo "::error::tag ${GITHUB_REF_NAME} does not match the version file (${file})"
+            exit 1
+          fi
+
+          echo "version=${base}" >> "$GITHUB_OUTPUT"
+
+          if [ "$base" != "$tag" ]; then
+            echo "prerelease=--prerelease" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Build release notes from the commits since the previous tag
+        env:
+          VERSION: ${{ steps.version.outputs.version }}
+        run: |
+          set -eu
+          previous="$(git describe --tags --abbrev=0 "${GITHUB_REF_NAME}^" 2>/dev/null || true)"
+
+          if [ -n "$previous" ]; then
+            range="${previous}..${GITHUB_REF_NAME}"
+            echo "Changes since ${previous}:" >&2
+          else
+            range="${GITHUB_REF_NAME}"
+            echo "First tagged release." >&2
+          fi
+
+          {
+            echo "## What changed"
+            echo
+            git log --no-merges --pretty='- %s (%h)' "$range"
+            echo
+            echo "## Install"
+            echo
+            echo '```bash'
+            echo "composer require mdestafadilah/aapanelapi:^${VERSION}"
+            echo '```'
+          } > notes.md
+
+      - name: Create the release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PRERELEASE: ${{ steps.version.outputs.prerelease }}
+        run: |
+          set -eu
+          args=(--title "$GITHUB_REF_NAME" --notes-file notes.md --verify-tag)
+
+          if [ -n "${PRERELEASE}" ]; then
+            args+=(--prerelease)
+          fi
+
+          gh release create "$GITHUB_REF_NAME" "${args[@]}"
+
+      # Optional: Packagist already updates itself from the webhook, this just
+      # removes the delay. Skipped when the secret is absent.
+      - name: Ask Packagist to update now
+        env:
+          PACKAGIST_TOKEN: ${{ secrets.PACKAGIST_TOKEN }}
+          PACKAGIST_USER: ${{ secrets.PACKAGIST_USER }}
+        run: |
+          set -eu
+          if [ -z "${PACKAGIST_TOKEN}" ]; then
+            echo "PACKAGIST_TOKEN is not set; relying on the Packagist webhook."
+            exit 0
+          fi
+
+          user="${PACKAGIST_USER:-mdestafadilah}"
+          curl --fail --silent --show-error \
+            -X POST "https://packagist.org/api/update-package?username=${user}&api_token=${PACKAGIST_TOKEN}" \
+            -H "Content-Type: application/json" \
+            -d "{\"repository\":\"https://github.com/${GITHUB_REPOSITORY}\"}"
+          echo "Packagist update requested."

@@ -263,6 +263,22 @@ composer test
 
 `tests/smoke.php` runs 91 checks against a fake transport: request signing, the `/v2` prefix, field names and types, the service catalog, and envelope/error handling. No panel needed.
 
+## Releasing
+
+Bumping the `version` file and pushing a tag is the whole manual part:
+
+```bash
+git tag -a v2.1.0 -m "2.1.0 - service management"
+git push origin v2.1.0
+```
+
+`.github/workflows/release.yml` then:
+
+1. runs `composer validate --strict`, the linter and the smoke test on PHP 7.4 (the floor in `composer.json`) and 8.3;
+2. refuses to continue when the tag and the `version` file disagree;
+3. creates the GitHub release, with notes generated from the commits since the previous tag — a tag containing a suffix (`v2.2.0-rc1`) is marked as a prerelease;
+4. pings Packagist when a `PACKAGIST_TOKEN` secret is configured. Without it Packagist still updates from its own GitHub webhook, just not immediately.
+
 ## Original source & credits
 
 This library was not written from scratch. It descends from a third-party aaPanel client that changed hands twice before the v2 rewrite:
