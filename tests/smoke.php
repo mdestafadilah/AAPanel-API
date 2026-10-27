@@ -32,6 +32,7 @@ if (is_file($autoload)) {
 use MythicalSystems\AaPanelApi\AaPanel;
 use MythicalSystems\AaPanelApi\AaPanelException;
 use MythicalSystems\AaPanelApi\Http\TransportInterface;
+use MythicalSystems\AaPanelApi\ServiceCatalog;
 
 final class FakeTransport implements TransportInterface
 {
@@ -233,6 +234,112 @@ $transport = new FakeTransport();
 client($transport)->subDomainList('example.com', 'www');
 Check::same('dns manager path', '/v2/plugin', $transport->path());
 Check::same('dns manager plugin name', 'dns_manager', $transport->query()['name']);
+
+// ---------------------------------------------------------------- services ---
+echo "\nservices\n";
+
+$transport = new FakeTransport();
+client($transport)->restartService('nginx');
+Check::same('service admin path', '/v2/system', $transport->path());
+Check::same('service admin action', 'ServiceAdmin', $transport->query()['action']);
+Check::same('service name travels in the body', 'nginx', $transport->fields['name']);
+Check::same('service action travels in the body', 'restart', $transport->fields['type']);
+
+$transport = new FakeTransport();
+client($transport)->stopService('mysqld');
+Check::same('stopService sends type=stop', 'stop', $transport->fields['type']);
+
+$transport = new FakeTransport();
+client($transport)->reloadService('redis');
+Check::same('reloadService sends type=reload', 'reload', $transport->fields['type']);
+
+$transport = new FakeTransport();
+client($transport)->serviceConfigTest('nginx');
+Check::same('config test uses the panel action name "test"', 'test', $transport->fields['type']);
+
+Check::same('phpFpmService accepts a dotted version', 'php-fpm-82', client(new FakeTransport())->phpFpmService('8.2'));
+Check::same('phpFpmService accepts the panel form', 'php-fpm-82', client(new FakeTransport())->phpFpmService('php-fpm-82'));
+
+$transport = new FakeTransport();
+client($transport)->serviceStatus('mysqld');
+Check::same('service status path', '/v2/panel/public/get_soft_status', $transport->path());
+Check::same('mysqld is mapped to the mysql software name', 'mysql', $transport->query()['name']);
+
+try {
+    client(new FakeTransport())->serviceAction('nginx', 'explode');
+    Check::that('unknown service action is rejected locally', false);
+} catch (InvalidArgumentException $e) {
+    Check::that('unknown service action is rejected locally', strpos($e->getMessage(), 'explode') !== false, $e->getMessage());
+}
+
+try {
+    client(new FakeTransport())->reloadService('mysqld');
+    Check::that('mysql reload is rejected before reaching the panel', false);
+} catch (InvalidArgumentException $e) {
+    Check::that(
+        'mysql reload is rejected before reaching the panel',
+        strpos($e->getMessage(), 'restartService') !== false,
+        $e->getMessage()
+    );
+}
+
+try {
+    client(new FakeTransport())->serviceConfigTest('redis');
+    Check::that('config test is rejected for services without one', false);
+} catch (InvalidArgumentException $e) {
+    Check::that(
+        'config test is rejected for services without one',
+        strpos($e->getMessage(), 'configtest') !== false,
+        $e->getMessage()
+    );
+}
+
+$transport = new FakeTransport();
+client($transport)->reloadService('php-fpm-83');
+Check::same('a PHP version the catalog does not list is passed through', 'reload', $transport->fields['type']);
+
+// ----------------------------------------------------------------- catalog ---
+echo "\nservice catalog\n";
+
+Check::same('documented reload command', '/etc/init.d/nginx reload', ServiceCatalog::command('nginx', 'reload'));
+Check::same('documented config test command', '/etc/init.d/nginx configtest', ServiceCatalog::command('nginx', 'configtest'));
+Check::same('restart is the default command', '/etc/init.d/nginx restart', ServiceCatalog::command('nginx'));
+Check::same('nginx main config path', '/www/server/nginx/conf/nginx.conf', ServiceCatalog::path('nginx', 'config_file'));
+Check::same('openresty is an alias of nginx', '/etc/init.d/nginx', ServiceCatalog::path('openresty', 'init'));
+Check::same('apache is an alias of httpd', '/etc/init.d/httpd', ServiceCatalog::path('apache', 'init'));
+Check::same('php-fpm version is templated', '/etc/init.d/php-fpm-82 restart', ServiceCatalog::command('php-fpm-8.2', 'restart'));
+Check::same('php-fpm config dir is templated', '/www/server/php/82/etc/', ServiceCatalog::path('php-fpm-82', 'config_dir'));
+Check::same('lsphp keeps its version without a dash', '/usr/local/lsws/lsphp74/', ServiceCatalog::path('lsphp74', 'program'));
+Check::same('mysql data directory', '/www/server/data', ServiceCatalog::path('mysqld', 'data_dir'));
+Check::same('canonical service name is exposed', 'php-fpm-74', ServiceCatalog::get('php74')['service']);
+
+try {
+    ServiceCatalog::command('mysqld', 'reload');
+    Check::that('undocumented mysql reload is rejected', false);
+} catch (InvalidArgumentException $e) {
+    Check::that('undocumented mysql reload is rejected', strpos($e->getMessage(), 'reload') !== false, $e->getMessage());
+}
+
+try {
+    ServiceCatalog::command('lsphp74', 'restart');
+    Check::that('lsphp has no init script', false);
+} catch (InvalidArgumentException $e) {
+    Check::that('lsphp has no init script', strpos($e->getMessage(), 'init script') !== false, $e->getMessage());
+}
+
+try {
+    ServiceCatalog::get('php');
+    Check::that('php without a version is rejected', false);
+} catch (InvalidArgumentException $e) {
+    Check::that('php without a version is rejected', strpos($e->getMessage(), 'version') !== false, $e->getMessage());
+}
+
+try {
+    ServiceCatalog::get('apache2');
+    Check::that('unknown service is rejected', false);
+} catch (InvalidArgumentException $e) {
+    Check::that('unknown service is rejected', strpos($e->getMessage(), 'Unknown service') !== false, $e->getMessage());
+}
 
 // ---------------------------------------------------------------- responses ---
 echo "\nresponses\n";

@@ -9,6 +9,7 @@ use MythicalSystems\AaPanelApi\Http\TransportInterface;
 use MythicalSystems\AaPanelApi\Traits\DatabaseTrait;
 use MythicalSystems\AaPanelApi\Traits\DnsTrait;
 use MythicalSystems\AaPanelApi\Traits\FileTrait;
+use MythicalSystems\AaPanelApi\Traits\ServiceTrait;
 use MythicalSystems\AaPanelApi\Traits\SslTrait;
 use MythicalSystems\AaPanelApi\Traits\WebsiteTrait;
 
@@ -40,6 +41,7 @@ class AaPanel
     use SslTrait;
     use FileTrait;
     use DnsTrait;
+    use ServiceTrait;
 
     /** Prefix shared by every documented v2 endpoint. */
     public const API_PREFIX = '/v2';

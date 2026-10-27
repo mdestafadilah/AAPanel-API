@@ -1,6 +1,6 @@
 # AAPanel-PHP
 
-A small PHP client for the **aaPanel panel API v2**: websites (PHP projects), domains, SSL certificates, files and MySQL databases.
+A small PHP client for the **aaPanel panel API v2**: websites (PHP projects), domains, SSL certificates, files, MySQL databases and system services (Nginx, MySQL, PHP-FPM, Redis, Apache).
 
 No framework, no required third-party HTTP library — plain cURL by default, Guzzle optional.
 
@@ -194,6 +194,43 @@ Return values are now the `message` payload instead of the whole envelope. Pass 
 | `unzip($source, $destination, $password)` | `/v2/files?action=UnZip` |
 | `addSubDomain()` / `deleteSubDomain()` / `modifySubDomain()` / `subDomainList()` | `/v2/plugin?action=a&name=dns_manager&…` |
 
+### Services
+
+Start, stop, restart and reload the software aaPanel installed itself — Nginx, MySQL/MariaDB, PHP-FPM, Redis, Apache and OpenLiteSpeed. The panel runs `/etc/init.d/<service> <action>` for you, which is exactly what [Service management commands](https://www.aapanel.com/docs/faq/Service_Manage_Commands.html) documents.
+
+| Method | Endpoint |
+|---|---|
+| `serviceAction($service, $action)` | `/v2/system?action=ServiceAdmin` |
+| `startService($service)` / `stopService($service)` | same, `type=start` / `stop` |
+| `restartService($service)` / `reloadService($service)` | same, `type=restart` / `reload` |
+| `serviceConfigTest($service)` | same, `type=test` (the page calls it `configtest`) |
+| `serviceStatus($name)` | `/v2/panel/public/get_soft_status?name=…` |
+| `phpFpmService($version)` | `8.2` → `php-fpm-82` |
+
+```php
+$aapanel->restartService('nginx');
+$aapanel->reloadService($aapanel->phpFpmService('8.2'));   // php-fpm-82
+$aapanel->restartService('mysqld');                        // MySQL has no reload
+```
+
+`reloadService()` and `serviceConfigTest()` refuse a service the official page does not document that action for, instead of letting the panel run an unknown init target and still answer "success": MySQL and Apache have no reload, OpenLiteSpeed turns any unknown action into a restart, and only Nginx and PHP-FPM document a config test. `serviceAction()` stays raw for everything else.
+
+A broken web server configuration is caught by the panel before it starts anything — the exception carries the `nginx -t` / `apachectl -t` output.
+
+**Service catalog.** `ServiceCatalog` holds the documented init scripts, commands and paths. It makes no API call, so it is also useful over SSH, in cron and in runbooks:
+
+```php
+use MythicalSystems\AaPanelApi\ServiceCatalog;
+
+ServiceCatalog::command('nginx', 'reload');            // /etc/init.d/nginx reload
+ServiceCatalog::command('php-fpm-8.2', 'configtest');  // /etc/init.d/php-fpm-82 configtest
+ServiceCatalog::path('nginx', 'config_file');          // /www/server/nginx/conf/nginx.conf
+ServiceCatalog::path('php-fpm-82', 'log');             // /www/server/php/82/var/log/php-fpm.log
+ServiceCatalog::actions('redis');                      // start, stop, restart, reload, status
+```
+
+Names are the ones the panel uses (`mysqld`, `httpd`, `php-fpm-82`, `lsphp74`). The aliases `mysql`, `apache`, `openresty` and `tengine` resolve to the same entries, and PHP versions are accepted with or without the dot (`8.2`, `82`, `php-fpm-8.2`).
+
 ## Error handling
 
 ```php
@@ -216,13 +253,15 @@ The provided v2 specification covers the website and MySQL controllers only. The
 
 `disableSite` / `enableSite`, `nodejsProjects`, `pm2Projects`, `unzip`, `forceHttps`, and everything in the DNS manager group.
 
+Service management is not in that specification either. `serviceAction` and the `startService` / `stopService` / `restartService` / `reloadService` / `serviceConfigTest` wrappers call `/v2/system?action=ServiceAdmin`, which is verified against the panel source (`class/system.py`: it executes `/etc/init.d/<name> <type>`) but is not documented as an API. `serviceStatus` reuses the `get_soft_status` endpoint `mysqlStatus` already relies on; only `name=mysql` is covered by the specification, so other software names are a best guess.
+
 ## Tests
 
 ```bash
 composer test
 ```
 
-`tests/smoke.php` runs 61 checks against a fake transport: request signing, the `/v2` prefix, field names and types, and envelope/error handling. No panel needed.
+`tests/smoke.php` runs 91 checks against a fake transport: request signing, the `/v2` prefix, field names and types, the service catalog, and envelope/error handling. No panel needed.
 
 ## Original source & credits
 

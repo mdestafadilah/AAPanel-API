@@ -1,6 +1,6 @@
 {
     "name": "mdestafadilah/aapanelapi",
-    "description": "PHP client for the aaPanel panel API v2 (websites, domains, SSL and MySQL databases). Maintained fork of mythicalsystems/aapanelapi.",
+    "description": "PHP client for the aaPanel panel API v2 (websites, domains, SSL, MySQL databases and system services). Maintained fork of mythicalsystems/aapanelapi.",
     "type": "library",
     "license": "MIT",
     "homepage": "https://github.com/mdestafadilah/AAPanel-API",
@@ -9,6 +9,7 @@
         "aapanel-api",
         "aapanel-php",
         "aapanel-v2",
+        "service-management",
         "mdestafadilah",
         "mythicalsystems",
         "nayskutzu"
