@@ -1,6 +1,8 @@
 # Sponsor button targets for this repository.
-# Trakteer and Saweria have no dedicated key in FUNDING.yml, so both go
-# under `custom`.
-custom:
-  - https://trakteer.id/mdestafadilah/tip
-  - https://saweria.co/mdestafadilah
+#
+# Trakteer and Saweria have no dedicated key in FUNDING.yml, so both go under
+# `custom`. Keep the flow style (`key: [...]`): Composer's GitHub driver reads
+# this file line by line and does not understand a block list, so
+# `custom:` followed by `- url` lines silently yields an empty funding array
+# on Packagist.
+custom: ['https://trakteer.id/mdestafadilah/tip', 'https://saweria.co/mdestafadilah']
