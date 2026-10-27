@@ -1,3 +1,4 @@
 *.cookie
 /.vscode
 /vendor/
+/.workbuddy-ai/

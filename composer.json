@@ -1,27 +1,56 @@
 {
-    "name": "mythicalsystems/aapanelapi",
-    "description": "AAPanel-PHP is a library that allows you to interact with your AAPanel account using PHP. It provides a simple and easy-to-use API that you can use to manage your AAPanel account, such as creating and managing users, domains, and websites.",
+    "name": "mdestafadilah/aapanelapi",
+    "description": "PHP client for the aaPanel panel API v2 (websites, domains, SSL and MySQL databases). Maintained fork of mythicalsystems/aapanelapi.",
     "type": "library",
     "license": "MIT",
+    "homepage": "https://github.com/mdestafadilah/AAPanel-API",
     "keywords": [
-        "mythicalsystems",
         "aapanel",
         "aapanel-api",
+        "aapanel-php",
+        "aapanel-v2",
+        "mdestafadilah",
+        "mythicalsystems",
         "nayskutzu"
     ],
     "autoload": {
         "psr-4": {
-            "Mythicalsystems\\AaPanelApi\\": "src/"
+            "MythicalSystems\\AaPanelApi\\": "src/"
         }
     },
     "authors": [
         {
+            "name": "mdestafadilah",
+            "email": "desta.08b@gmail.com",
+            "role": "Maintainer"
+        },
+        {
             "name": "NaysKutzu",
-            "email": "ghermancassian2008@gmail.com"
+            "email": "ghermancassian2008@gmail.com",
+            "role": "Original author (mythicalsystems/aapanelapi)"
+        },
+        {
+            "name": "skolastikarhea",
+            "homepage": "https://github.com/skolastikarhea",
+            "role": "Original author (api_aapanel)"
         }
     ],
+    "support": {
+        "issues": "https://github.com/mdestafadilah/AAPanel-API/issues",
+        "source": "https://github.com/mdestafadilah/AAPanel-API"
+    },
     "minimum-stability": "stable",
     "require": {
-        "php": ">=5.3.0"
+        "php": ">=7.4",
+        "ext-curl": "*"
+    },
+    "suggest": {
+        "guzzlehttp/guzzle": "Optional transport (^7.0) if you prefer Guzzle over the bundled cURL transport"
+    },
+    "scripts": {
+        "test": "php tests/smoke.php"
+    },
+    "config": {
+        "sort-packages": true
     }
 }
